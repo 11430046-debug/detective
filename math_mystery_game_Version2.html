@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學謎案 - 民國十六年密碼破譯</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap');
+        body { font-family: 'Noto Serif TC', serif; }
+        .mystery-card { transition: all 0.3s ease; }
+        .mystery-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .mystery-card.completed { opacity: 0.6; cursor: not-allowed !important; background-color: #f3f4f6; }
+        .mystery-card.completed:hover { transform: none; box-shadow: none; }
+        .clue-found { animation: foundPulse 0.6s ease-in-out; }
+        @keyframes foundPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background-color: #fef3c7; }
+            100% { transform: scale(1); }
+        }
+        .math-input { border: 2px solid #d1d5db; transition: border-color 0.3s; }
+        .math-input:focus { border-color: #3b82f6; outline: none; }
+        .correct-answer { border-color: #10b981 !important; background-color: #ecfdf5; }
+        .wrong-answer { border-color: #ef4444 !important; background-color: #fef2f2; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+    <!-- Game Header -->
+    <div class="bg-gradient-to-r from-red-800 to-orange-700 text-white p-4 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">🕵️ 數學謎案：民國密碼破譯</h1>
+                <p class="text-red-100">民國十六年 (1927) - 革命風雲</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm">調查點數</div>
+                <div class="text-xl font-bold" id="investigation-points">100</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="max-w-4xl mx-auto p-6">
+        <div class="bg-white rounded-lg shadow-xl p-8 text-center">
+            <div class="text-6xl mb-4">🔍</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">歡迎來到數學謎案</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                民國十六年，政治風雲變幻。國共兩黨都使用數學密碼來隱藏重要信息。<br>
+                作為一名密碼破譯專家，你需要運用數學知識來解開這些歷史謎團。
+            </p>
+            <div class="mb-6">
+                <input type="text" id="player-name" placeholder="請輸入你的姓名" 
+                       class="px-4 py-2 border-2 border-gray-300 rounded-lg text-center text-lg focus:border-blue-500 focus:outline-none">
+            </div>
+            <button onclick="startGame()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition-colors">
+                開始調查
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden max-w-6xl mx-auto p-6">
+        <!-- Level Info -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="level-title">國民黨密碼破譯</h2>
+                    <p class="text-gray-600" id="level-year">民國十六年 (1927)</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">已找到線索</div>
+                    <div class="text-xl font-bold text-blue-600" id="clues-found">0 / 6</div>
+                </div>
+            </div>
+            <p class="text-gray-700 leading-relaxed" id="level-story">
+                民國十六年四月，上海。國共合作破裂在即，政治風雲詭譎多變。你是一名受過西方教育的密碼破譯專家，受命調查國民黨內部的秘密通訊系統。據可靠消息，他們已經開始使用數學密碼來隱藏重要信息——黨員名單、資金流向、聚會時間，甚至是對共產黨的行動計畫。這些看似普通的數學題目，實際上隱藏著足以改變中國命運的機密情報。時間緊迫，你必須在他們察覺之前破解這套密碼系統。
+            </p>
+        </div>
+
+        <!-- Scene Description -->
+        <div class="bg-gradient-to-r from-amber-100 to-orange-100 rounded-lg p-6 mb-6 border-l-4 border-orange-500">
+            <h3 class="font-semibold text-gray-800 mb-2">🏛️ 現場描述</h3>
+            <p class="text-gray-700" id="scene-description">
+                夜深人靜，你潛入了國民黨某高級官員的私人書房。月光透過百葉窗灑在桌案上，照亮了散落的文件。書房內瀰漫著淡淡的墨香和煙草味，顯示主人剛剛離開不久。牆上掛著孫中山先生的遺像，旁邊是一個精緻的算盤。桌上攤開著各種數學計算紙張，有幾何圖形、數字序列，還有一本厚厚的帳本。角落的書架上放著《幾何原本》和《代數學》等西方數學著作。這裡的每一件物品都可能隱藏著重要線索...
+            </p>
+        </div>
+
+        <!-- Investigation Locations -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('abacus')" data-location="abacus">
+                <div class="text-3xl mb-2">🧮</div>
+                <h4 class="font-semibold text-gray-800">算盤</h4>
+                <p class="text-sm text-gray-600">古老的計算工具</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+            
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('geometry')" data-location="geometry">
+                <div class="text-3xl mb-2">📐</div>
+                <h4 class="font-semibold text-gray-800">幾何圖</h4>
+                <p class="text-sm text-gray-600">複雜的幾何圖形</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+            
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('sequence')" data-location="sequence">
+                <div class="text-3xl mb-2">🔢</div>
+                <h4 class="font-semibold text-gray-800">數字序列</h4>
+                <p class="text-sm text-gray-600">神秘的數字排列</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+            
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('calendar')" data-location="calendar">
+                <div class="text-3xl mb-2">📅</div>
+                <h4 class="font-semibold text-gray-800">日曆</h4>
+                <p class="text-sm text-gray-600">標記著特殊日期</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+            
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('ledger')" data-location="ledger">
+                <div class="text-3xl mb-2">📊</div>
+                <h4 class="font-semibold text-gray-800">帳本</h4>
+                <p class="text-sm text-gray-600">記錄著資金往來</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+            
+            <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('map')" data-location="map">
+                <div class="text-3xl mb-2">🗺️</div>
+                <h4 class="font-semibold text-gray-800">地圖</h4>
+                <p class="text-sm text-gray-600">標註距離的地圖</p>
+                <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+            </div>
+        </div>
+
+        <!-- Found Clues -->
+        <div id="clues-section" class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">🔍 已發現的線索</h3>
+            <div id="clues-list" class="space-y-3">
+                <p class="text-gray-500 italic">尚未發現任何線索...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Math Puzzle Modal -->
+    <div id="math-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">🧮 數學謎題</h3>
+            <p class="text-gray-700 mb-4" id="math-question">數學問題將在這裡顯示</p>
+            <div class="mb-4">
+                <input type="text" id="math-answer" placeholder="請輸入答案" 
+                       class="math-input w-full px-4 py-2 rounded-lg text-center text-lg">
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="submitAnswer()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition-colors">
+                    提交答案
+                </button>
+                <button onclick="closeMathModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    取消
+                </button>
+            </div>
+            <div id="math-feedback" class="mt-4 hidden">
+                <div class="p-3 rounded-lg">
+                    <p id="feedback-text" class="font-semibold"></p>
+                    <p id="explanation-text" class="text-sm mt-2"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Clue Modal -->
+    <div id="text-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4" id="text-modal-title">🔍 調查發現</h3>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                <p class="text-gray-700 leading-relaxed" id="text-clue-content">文本線索將在這裡顯示</p>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p class="text-sm text-blue-800" id="text-hint">💡 提示將在這裡顯示</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="collectTextClue()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-colors">
+                    收集線索
+                </button>
+                <button onclick="closeTextModal()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold transition-colors">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 p-6">
+            <div class="text-center">
+                <div class="text-6xl mb-4">🎉</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">恭喜！謎案破解</h3>
+                <p class="text-gray-700 mb-6" id="success-message">
+                    通過數學計算破解了國民黨的密碼系統，發現了他們的組織結構和活動計畫。但你意識到，這些知識分子用如此巧妙的方法，只是為了救國救民...
+                </p>
+                <button onclick="restartGame()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    重新開始
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            playerName: '',
+            currentLevel: 0,
+            foundClues: [],
+            investigationPoints: 100,
+            currentPuzzle: null,
+            currentLocation: null
+        };
+
+        const gameData = {
+            levels: [
+                {
+                    title: '國民黨密碼破譯',
+                    year: '民國十六年 (1927)',
+                    story: '民國十六年四月，上海。國共合作破裂在即，政治風雲詭譎多變。你是一名受過西方教育的密碼破譯專家，受命調查國民黨內部的秘密通訊系統。據可靠消息，他們已經開始使用數學密碼來隱藏重要信息——黨員名單、資金流向、聚會時間，甚至是對共產黨的行動計畫。這些看似普通的數學題目，實際上隱藏著足以改變中國命運的機密情報。時間緊迫，你必須在他們察覺之前破解這套密碼系統。',
+                    scene: '夜深人靜，你潛入了國民黨某高級官員的私人書房。月光透過百葉窗灑在桌案上，照亮了散落的文件。書房內瀰漫著淡淡的墨香和煙草味，顯示主人剛剛離開不久。牆上掛著孫中山先生的遺像，旁邊是一個精緻的算盤。桌上攤開著各種數學計算紙張，有幾何圖形、數字序列，還有一本厚厚的帳本。角落的書架上放著《幾何原本》和《代數學》等西方數學著作。這裡的每一件物品都可能隱藏著重要線索...',
+                    locationOrder: ['geometry', 'abacus', 'calendar', 'sequence', 'map', 'ledger']
+                },
+                {
+                    title: '共產黨地下組織調查',
+                    year: '民國十六年 (1927)',
+                    story: '四一二事變後，共產黨被迫轉入地下。你接到新的任務：追蹤共產黨地下組織的活動軌跡。與國民黨不同，共產黨的密碼系統更加精密複雜，他們大多是知識分子出身，對數學有著深厚的造詣。每個地下聯絡點都有不同的數學謎題作為暗號，只有正確解答才能獲得下一步的指示。據情報顯示，他們正在策劃一次重要的秘密會議，可能會決定黨的未來方向。你必須搶在他們行動之前，破解這些數學密碼，找出他們的真實意圖。',
+                    scene: '你來到了法租界一處不起眼的石庫門房屋。這裡表面上是一家私塾，實際上卻是共產黨的秘密聯絡點。推開吱呀作響的木門，眼前是一間昏暗的地下室。牆上貼滿了各種數學公式和圖表，從歐幾里得幾何到微積分，應有盡有。桌上的煤油燈發出微弱的光芒，照亮了一堆用密碼書寫的文件。空氣中瀰漫著潮濕的霉味和墨水的氣息。角落裡有一台老舊的算盤，旁邊是幾本翻得破舊的數學教科書。這些共產黨人顯然把數學當作了他們革命事業的工具...',
+                    locationOrder: ['ledger', 'calendar', 'abacus', 'map', 'geometry', 'sequence']
+                },
+                {
+                    title: '軍閥密電破譯',
+                    year: '民國十六年 (1927)',
+                    story: '北洋政府名存實亡，各地軍閥割據一方。你的最後一個任務是破解軍閥之間的密電通訊。這些軍閥雖然文化水平不高，但他們聘請的幕僚中不乏數學高手。為了防止電報被敵對勢力截獲，他們開始使用數學密碼來傳遞軍事情報——兵力部署、糧草補給、作戰計畫，甚至是與外國勢力的秘密協議。據可靠消息，某軍閥正在策劃一次大規模的軍事行動，可能會影響整個華北地區的政治格局。時局動盪，你必須儘快破解這些密碼，為即將到來的變局做好準備。',
+                    scene: '深夜時分，你潛入了某軍閥的指揮部。這是一座改建的四合院，外表古樸，內部卻安裝了最新的電報設備。指揮室內燈火通明，巨大的作戰地圖佔據了整面牆壁，上面密密麻麻地標註著各種數字和符號。電報機旁堆滿了加密電文，紙張上的數字排列看似雜亂無章，實則暗藏玄機。桌上還有一個軍用算盤，旁邊是幾何繪圖工具和計算尺。空氣中瀰漫著煙草和機油的味道，牆上掛著的軍事地圖在燈光下投下斑駁的陰影。每一份文件都可能關係到千軍萬馬的生死存亡...',
+                    locationOrder: ['map', 'sequence', 'geometry', 'ledger', 'abacus', 'calendar']
+                }
+            ],
+            locations: {
+                abacus: { 
+                    name: '算盤', 
+                    icon: '🧮', 
+                    type: 'puzzle',
+                    puzzle: { 
+                        question: '算盤上顯示：一個五珠撥下，三個一珠撥上，這代表什麼數字？', 
+                        answer: '8', 
+                        explanation: '算盤：五珠代表5，一珠代表1，所以 5 + 3 = 8' 
+                    },
+                    clue: { id: 'membership', name: '黨員密碼名單', description: '用數學編碼的黨員信息' }
+                },
+                geometry: { 
+                    name: '幾何圖', 
+                    icon: '📐', 
+                    type: 'text',
+                    textClue: '這是一張精心繪製的幾何圖紙，用上等的宣紙和精細的毛筆完成。圖上畫著複雜的幾何圖形：正三角形、正方形、圓形，它們以某種特殊的方式相互連接。角落用小楷寫著「三角形內角和180度，正方形對角線相等，圓周率約等於3.14159」。紙張邊緣還有一些用鉛筆輕輕標註的數字：3、4、5、6、8、12。仔細觀察，你發現這些圖形的排列似乎暗示著某種層級關係，就像組織架構圖一樣。最奇怪的是，每個圖形內部都有一個小小的漢字：「總」、「副」、「部」、「組」、「員」...',
+                    hint: '幾何圖形的層級排列可能代表組織結構，數字可能是人員編號',
+                    clue: { id: 'structure', name: '組織結構圖', description: '用幾何圖形隱藏的組織架構信息' }
+                },
+                sequence: { 
+                    name: '數字序列', 
+                    icon: '🔢', 
+                    type: 'puzzle',
+                    puzzle: { 
+                        question: '數列：3, 6, 9, 12, __, 下一個數字是？', 
+                        answer: '15', 
+                        explanation: '這是3的倍數數列，每次加3：12 + 3 = 15' 
+                    },
+                    clue: { id: 'meeting', name: '聚會時間密碼', description: '用日期計算隱藏的會議時間' }
+                },
+                calendar: { 
+                    name: '日曆', 
+                    icon: '📅', 
+                    type: 'text',
+                    textClue: '這是一本民國十六年的西式日曆，印刷精美，顯然是從上海的洋行購買的舶來品。日曆上用紅色墨水圈出了幾個特殊日期：3月12日、3月19日、3月26日，4月2日、4月9日。仔細計算，這些日期都是星期六，而且每隔七天就有一個。日曆的邊緣用毛筆寫著「每七天一次，風雨無阻，午後三時，梧桐樹下」。更有趣的是，每個被圈出的日期旁邊都有一個小小的數學符號：加號、減號、乘號、除號、等號。在4月12日這一天，用鉛筆輕輕寫著「大事將成」四個字，而這一天正好是下個星期六...',
+                    hint: '定期聚會的時間、地點和暗號規律已經被發現，下次聚會可能有重要行動',
+                    clue: { id: 'schedule', name: '聚會時間表', description: '發現了定期聚會的時間規律' }
+                },
+                ledger: { 
+                    name: '帳本', 
+                    icon: '📊', 
+                    type: 'puzzle',
+                    puzzle: { 
+                        question: '帳本記錄：收入240元，花費135元，剩下的錢要平分給3個人，每人分到多少錢？', 
+                        answer: '35', 
+                        explanation: '剩餘的錢：240 - 135 = 105元，平分給3人：105 ÷ 3 = 35元' 
+                    },
+                    clue: { id: 'funds', name: '資金流向帳目', description: '用數學計算隱藏的資金分配' }
+                },
+                map: { 
+                    name: '地圖', 
+                    icon: '🗺️', 
+                    type: 'text',
+                    textClue: '這是一張1927年版的上海市區詳細地圖，由英國測繪局繪製，精確度極高。地圖上用不同顏色的鉛筆標記了多個重要地點：外灘的匯豐銀行大樓（標註數字15）、南京路的先施百貨公司（標註數字8）、法租界的霞飛路咖啡館（標註數字12）、虹口的內山書店（標註數字6）、靜安寺路的某處民宅（標註數字20）。每個地點之間還用細線相連，形成了一個複雜的網絡圖。地圖的背面用毛筆寫著「東風西漸，南北呼應，水路並進，聲東擊西」，下面還有一行小字：「距離以里計算，時間以刻計算，人數以倍計算」。最引人注目的是，在黃浦江邊標註了一個紅色的叉號，旁邊寫著「關鍵時刻」...',
+                    hint: '這是一張詳細的行動部署圖，數字可能代表人員配置，線路可能是撤退路線',
+                    clue: { id: 'locations', name: '活動據點地圖', description: '標記了重要活動地點的分布圖' }
+                }
+            }
+        };
+
+        function startGame() {
+            const playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) {
+                alert('請輸入你的姓名！');
+                return;
+            }
+            
+            gameState.playerName = playerName;
+            gameState.currentLevel = 0;
+            gameState.foundClues = [];
+            gameState.investigationPoints = 100;
+            
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            loadLevel(0);
+        }
+
+        function loadLevel(levelIndex) {
+            gameState.currentLevel = levelIndex;
+            gameState.foundClues = [];
+            gameState.investigationPoints = 100;
+            
+            const level = gameData.levels[levelIndex];
+            document.getElementById('level-title').textContent = level.title;
+            document.getElementById('level-year').textContent = level.year;
+            document.getElementById('level-story').textContent = level.story;
+            document.getElementById('scene-description').textContent = level.scene;
+            
+            // Reset all location cards
+            resetLocationCards();
+            
+            // Rearrange location cards based on level order
+            const locationsContainer = document.querySelector('.grid');
+            locationsContainer.innerHTML = '';
+            
+            level.locationOrder.forEach(locationId => {
+                const location = gameData.locations[locationId];
+                const cardHTML = `
+                    <div class="mystery-card bg-white rounded-lg shadow-md p-4 cursor-pointer border-2 border-transparent hover:border-blue-300" onclick="investigateLocation('${locationId}')" data-location="${locationId}">
+                        <div class="text-3xl mb-2">${location.icon}</div>
+                        <h4 class="font-semibold text-gray-800">${location.name}</h4>
+                        <p class="text-sm text-gray-600">${getLocationDescription(locationId)}</p>
+                        <div class="mt-2 text-xs text-blue-600">點擊調查</div>
+                    </div>
+                `;
+                locationsContainer.innerHTML += cardHTML;
+            });
+            
+            updateUI();
+        }
+
+        function getLocationDescription(locationId) {
+            const descriptions = {
+                abacus: '古老的計算工具',
+                geometry: '複雜的幾何圖形',
+                sequence: '神秘的數字排列',
+                calendar: '標記著特殊日期',
+                ledger: '記錄著資金往來',
+                map: '標註距離的地圖'
+            };
+            return descriptions[locationId] || '神秘的物品';
+        }
+
+        function investigateLocation(locationId) {
+            if (gameState.investigationPoints <= 0) {
+                alert('調查點數不足！');
+                return;
+            }
+
+            const location = gameData.locations[locationId];
+            if (!location) return;
+            
+            // Check if this location has already been completed
+            if (location.clue && gameState.foundClues.find(c => c.id === location.clue.id)) {
+                return; // Already completed, do nothing
+            }
+
+            gameState.currentLocation = locationId;
+            
+            if (location.type === 'puzzle') {
+                // Show math puzzle modal
+                gameState.currentPuzzle = location.puzzle;
+                document.getElementById('math-question').textContent = location.puzzle.question;
+                document.getElementById('math-answer').value = '';
+                document.getElementById('math-feedback').classList.add('hidden');
+                document.getElementById('math-modal').classList.remove('hidden');
+                
+                // Focus on input
+                setTimeout(() => {
+                    document.getElementById('math-answer').focus();
+                }, 100);
+            } else if (location.type === 'text') {
+                // Show text clue directly
+                showTextClue(location);
+            }
+        }
+
+        function submitAnswer() {
+            const userAnswer = document.getElementById('math-answer').value.trim();
+            const correctAnswer = gameState.currentPuzzle.answer;
+            const feedbackDiv = document.getElementById('math-feedback');
+            const feedbackText = document.getElementById('feedback-text');
+            const explanationText = document.getElementById('explanation-text');
+            const answerInput = document.getElementById('math-answer');
+
+            if (userAnswer === correctAnswer) {
+                // Correct answer
+                answerInput.classList.remove('wrong-answer');
+                answerInput.classList.add('correct-answer');
+                feedbackDiv.className = 'mt-4 p-3 rounded-lg bg-green-100 border border-green-300';
+                feedbackText.textContent = '🎉 答案正確！';
+                feedbackText.className = 'font-semibold text-green-800';
+                explanationText.textContent = gameState.currentPuzzle.explanation;
+                explanationText.className = 'text-sm mt-2 text-green-700';
+                
+                // Add clue if location has one
+                const location = gameData.locations[gameState.currentLocation];
+                if (location.clue && !gameState.foundClues.find(c => c.id === location.clue.id)) {
+                    gameState.foundClues.push(location.clue);
+                }
+                
+                gameState.investigationPoints -= 10;
+                
+                setTimeout(() => {
+                    closeMathModal();
+                    updateUI();
+                    checkWinCondition();
+                }, 2000);
+                
+            } else {
+                // Wrong answer
+                answerInput.classList.remove('correct-answer');
+                answerInput.classList.add('wrong-answer');
+                feedbackDiv.className = 'mt-4 p-3 rounded-lg bg-red-100 border border-red-300';
+                feedbackText.textContent = '❌ 答案錯誤，請再試一次';
+                feedbackText.className = 'font-semibold text-red-800';
+                explanationText.textContent = '提示：仔細檢查你的計算過程';
+                explanationText.className = 'text-sm mt-2 text-red-700';
+                
+                gameState.investigationPoints -= 5;
+                updateUI();
+            }
+            
+            feedbackDiv.classList.remove('hidden');
+        }
+
+        function closeMathModal() {
+            document.getElementById('math-modal').classList.add('hidden');
+            document.getElementById('math-answer').classList.remove('correct-answer', 'wrong-answer');
+        }
+
+        function showTextClue(location) {
+            document.getElementById('text-modal-title').textContent = `🔍 調查：${location.name}`;
+            document.getElementById('text-clue-content').textContent = location.textClue;
+            document.getElementById('text-hint').textContent = `💡 ${location.hint}`;
+            document.getElementById('text-modal').classList.remove('hidden');
+        }
+
+        function collectTextClue() {
+            const location = gameData.locations[gameState.currentLocation];
+            
+            // Add clue if location has one and it hasn't been found yet
+            if (location.clue && !gameState.foundClues.find(c => c.id === location.clue.id)) {
+                gameState.foundClues.push(location.clue);
+            }
+            
+            gameState.investigationPoints -= 5; // Less cost for text clues
+            closeTextModal();
+            updateUI();
+            checkWinCondition();
+        }
+
+        function closeTextModal() {
+            document.getElementById('text-modal').classList.add('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('investigation-points').textContent = gameState.investigationPoints;
+            document.getElementById('clues-found').textContent = `${gameState.foundClues.length} / 6`;
+            
+            // Update location cards to show completed status
+            const currentLevel = gameData.levels[gameState.currentLevel];
+            if (currentLevel) {
+                currentLevel.locationOrder.forEach(locationId => {
+                    const location =
